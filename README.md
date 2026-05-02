@@ -1,2 +1,1 @@
-# jl-dashboard
-JL Setters KPI Dashboard
+[Open Dashboard](jl_dashboard.html)
