@@ -1,81 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JL Setters — KPI Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f8f6;color:#1a1a18;min-height:100vh}
-.wrap{max-width:960px;margin:0 auto;padding:1.5rem 1.25rem}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
-.topbar h1{font-size:18px;font-weight:600;color:#1a1a18;letter-spacing:-0.01em}
-.topbar h1 span{color:#7c6ef7}
-.badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500}
-.badge.live{background:#d4edda;color:#1a7a4a}
-.badge.err{background:#fde8e8;color:#c0392b}
-.badge.loading{background:#ebebeb;color:#888}
-.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.refresh-btn{font-size:11px;padding:4px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:#fff;color:#555;transition:all 0.12s}
-.refresh-btn:hover{background:#f0f0f0}
-.tabs{display:flex;gap:4px;flex-wrap:wrap}
-.tab{padding:5px 12px;font-size:12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:#fff;color:#666;transition:all 0.12s;font-weight:500}
-.tab.active{background:#1a1a18;color:#fff;border-color:#1a1a18}
-.row2{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
-.vtabs{display:flex;gap:4px;flex-wrap:wrap}
-.vtab{padding:6px 16px;font-size:12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:#fff;color:#666;font-weight:500}
-.vtab.active{border-color:#1a1a18;color:#1a1a18}
-.vsep{width:1px;height:24px;background:#e0e0e0}
-.slabel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#aaa;margin-bottom:8px}
-.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:1.25rem}
-.kcard{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #ebebeb}
-.klabel{font-size:11px;color:#888;margin-bottom:4px}
-.kval{font-size:22px;font-weight:600;color:#1a1a18;display:flex;align-items:center;gap:6px}
-.kval.red{color:#c0392b}.kval.amber{color:#d68910}.kval.green{color:#1a7a4a}
-.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dot.red{background:#e74c3c}.dot.amber{background:#f39c12}.dot.green{background:#27ae60}
-.hr{border:none;border-top:1px solid #ebebeb;margin:1.25rem 0}
-.twocol{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
-.acard{background:#fff;border:1px solid #ebebeb;border-radius:12px;padding:1rem 1.125rem}
-.atitle{font-size:13px;font-weight:600;color:#1a1a18;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #ebebeb;padding-left:10px}
-.srow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;border-bottom:1px solid #f5f5f5}
-.srow:last-child{border-bottom:none}
-.sn{color:#888}
-.sv{font-weight:600;color:#1a1a18;display:flex;align-items:center;gap:4px}
-.sv.red{color:#c0392b}.sv.amber{color:#d68910}.sv.green{color:#1a7a4a}
-.leg{display:flex;gap:14px;margin-bottom:6px;flex-wrap:wrap}
-.li{display:flex;align-items:center;gap:4px;font-size:11px;color:#888}
-.ls{width:10px;height:10px;border-radius:2px}
-.nodata{font-size:13px;color:#aaa;padding:3rem 0;text-align:center;line-height:2}
-.spinner{display:flex;align-items:center;justify-content:center;padding:4rem 0;color:#aaa;font-size:13px}
-.last-updated{font-size:11px;color:#aaa;margin-top:1.5rem;text-align:right}
-select{font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a18;cursor:pointer}
-@media(max-width:520px){.twocol{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="topbar">
-    <div style="display:flex;align-items:center;gap:10px">
-      <h1>JL Setters — <span>Live Dashboard</span></h1>
-      <span class="badge loading" id="statusBadge">Connecting...</span>
-    </div>
-    <div class="controls">
-      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
-      <div class="tabs" id="periodTabs"></div>
-    </div>
-  </div>
-  <div class="row2" id="row2">
-    <div class="vtabs" id="viewTabs">
-      <div class="vtab active" data-v="combined">Combined</div>
-      <div class="vtab" data-v="jack">Jack</div>
-      <div class="vtab" data-v="lewis">Lewis</div>
-      <div class="vtab" data-v="closing">B2C Closing</div>
-    </div>
-  </div>
-  <div id="main"><div class="spinner">Loading live data from your sheet...</div></div>
-  <div class="last-updated" id="lastUpdated"></div>
+JL Setters — Live Dashboard
+Connecting...
+↻ Refresh
+Combined
+Jack
+Lewis
+B2C Closing
+Loading live data from your sheet...
+
 </div>
 
 <script>
