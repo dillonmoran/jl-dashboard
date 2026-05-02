@@ -25,7 +25,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .row2{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
 .vtabs{display:flex;gap:4px;flex-wrap:wrap}
 .vtab{padding:6px 16px;font-size:12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:#fff;color:#666;font-weight:500}
-.vtab.active{border-color:#1a1a18;color:#1a1a18;background:#fff}
+.vtab.active{border-color:#1a1a18;color:#1a1a18}
 .vsep{width:1px;height:24px;background:#e0e0e0}
 .slabel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#aaa;margin-bottom:8px}
 .kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:1.25rem}
@@ -47,7 +47,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .leg{display:flex;gap:14px;margin-bottom:6px;flex-wrap:wrap}
 .li{display:flex;align-items:center;gap:4px;font-size:11px;color:#888}
 .ls{width:10px;height:10px;border-radius:2px}
-.nodata{font-size:13px;color:#aaa;padding:3rem 0;text-align:center;line-height:1.8}
+.nodata{font-size:13px;color:#aaa;padding:3rem 0;text-align:center;line-height:2}
 .spinner{display:flex;align-items:center;justify-content:center;padding:4rem 0;color:#aaa;font-size:13px}
 .last-updated{font-size:11px;color:#aaa;margin-top:1.5rem;text-align:right}
 select{font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a18;cursor:pointer}
@@ -79,60 +79,88 @@ select{font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:8px;ba
 </div>
 
 <script>
-const SHEET_ID='1U0RvCd2ckuwBQDiPzCBTQ6VJW7ulwYKOjLlhHiCx6dM';
-const SHEET_NAME='Daily Submissions';
-const API_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-const COLS={timestamp:0,submitter:1,date:2,follows:3,inbLeads:4,qls:5,dms:6,convos:7,unqAppt:8,qlAppt:9,callsTaken:10,callsClosed:11,cashCollected:12,revenue:13};
-const JACK_NAMES=['jack glover','ollie sykes'];
-const LEWIS_NAMES=['lewis sheehy','harry tasch'];
+const SHEET_ID = '1U0RvCd2ckuwBQDiPzCBTQ6VJW7ulwYKOjLlhHiCx6dM';
+const SHEET_NAME = 'Daily Submissions';
+// Use allorigins proxy to bypass CORS
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&headers=1`;
+const PROXY_URL = `https://api.allorigins.win/get?url=${encodeURIComponent(SHEET_URL)}`;
 
-let allRows=[],period='Month',view='combined',selMonth=null,selDay=null;
-const PERIODS=['Day','Month','3M','6M','9M','12M'];
+const JACK_NAMES = ['jack glover','ollie sykes'];
+const LEWIS_NAMES = ['lewis sheehy','harry tasch'];
 
-function n(v){if(v===null||v===undefined||v===''||v==='-')return null;const f=parseFloat(v);return isNaN(f)?null:f;}
+const COLS = {submitter:1,date:2,follows:3,inbLeads:4,qls:5,dms:6,convos:7,unqAppt:8,qlAppt:9,callsTaken:10,callsClosed:11,cashCollected:12,revenue:13};
+
+let allRows = [], period = 'Month', view = 'combined', selMonth = null, selDay = null;
+const PERIODS = ['Day','Month','3M','6M','9M','12M'];
+
+function n(v){if(v===null||v===undefined||v===''||v==='-'||v==='null')return null;const f=parseFloat(String(v).replace(/[£,]/g,''));return isNaN(f)?null:f;}
 function fmt(v,t){
-  if(v===null||v===undefined||isNaN(v))return '—';
+  if(v===null||v===undefined||isNaN(v))return'—';
   if(t==='pct')return v.toFixed(1)+'%';
-  if(t==='gbp')return '£'+Math.round(v).toLocaleString('en-GB');
+  if(t==='gbp')return'£'+Math.round(v).toLocaleString('en-GB');
   return Math.round(v).toLocaleString();
 }
 function rag(v,m){
   const r={dmConvo:{r:3,a:8},convToCall:{r:2,a:5},showPct:{r:65,a:80},closePct:{r:35,a:50}};
-  if(!r[m]||v===null||v===undefined)return '';
-  if(v<r[m].r)return 'red';
-  if(v<r[m].a)return 'amber';
-  return 'green';
+  if(!r[m]||v===null||v===undefined)return'';
+  if(v<r[m].r)return'red';if(v<r[m].a)return'amber';return'green';
 }
-function dot(v,m){const r=rag(v,m);if(!r)return '';return `<span class="dot ${r}"></span>`;}
-function isJack(s){return JACK_NAMES.some(x=>s.toLowerCase().includes(x.split(' ')[0]));}
-function isLewis(s){return LEWIS_NAMES.some(x=>s.toLowerCase().includes(x.split(' ')[0]));}
+function dot(v,m){const r=rag(v,m);if(!r)return'';return`<span class="dot ${r}"></span>`;}
+function isJack(s){return JACK_NAMES.some(x=>s.toLowerCase().includes(x.split(' ')[0].toLowerCase()));}
+function isLewis(s){return LEWIS_NAMES.some(x=>s.toLowerCase().includes(x.split(' ')[0].toLowerCase()));}
+
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  return lines.slice(1).map(line=>{
+    const fields=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'&&!inQ)inQ=true;
+      else if(c==='"'&&inQ&&line[i+1]==='"'){cur+='"';i++;}
+      else if(c==='"'&&inQ)inQ=false;
+      else if(c===','&&!inQ){fields.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    fields.push(cur.trim());
+    return fields.map(f=>f.replace(/^"|"$/g,'')||null);
+  }).filter(r=>r.some(v=>v&&v!=='null'));
+}
 
 function parseRows(rows){
   return rows.map(r=>{
-    const sub=r[COLS.submitter]||'';
-    const dateRaw=r[COLS.date];
+    const sub=(r[COLS.submitter]||'').replace(/^"|"$/g,'');
+    const dateRaw=(r[COLS.date]||'').replace(/^"|"$/g,'');
     let dateStr=null;
     if(dateRaw){
-      try{const d=new Date(dateRaw);if(!isNaN(d))dateStr=d.toISOString().split('T')[0];}catch(e){}
-      if(!dateStr&&typeof dateRaw==='string'){
+      // Try various date formats
+      const d1=new Date(dateRaw);
+      if(!isNaN(d1.getTime()))dateStr=d1.toISOString().split('T')[0];
+      if(!dateStr){
         const p=dateRaw.split('/');
-        if(p.length===3)dateStr=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+        if(p.length===3)dateStr=`${p[2].length===2?'20'+p[2]:p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+      }
+      if(!dateStr){
+        const p=dateRaw.split('-');
+        if(p.length===3&&p[0].length===4)dateStr=dateRaw;
       }
     }
-    return{submitter:sub,date:dateStr,month:dateStr?dateStr.slice(0,7):null,
+    return{
+      submitter:sub,date:dateStr,month:dateStr?dateStr.slice(0,7):null,
       isJack:isJack(sub),isLewis:isLewis(sub),
       follows:n(r[COLS.follows]),inbLeads:n(r[COLS.inbLeads]),qls:n(r[COLS.qls]),
-      dms:n(r[COLS.dms]),convos:n(r[COLS.convos]),unqAppt:n(r[COLS.unqAppt]),qlAppt:n(r[COLS.qlAppt]),
+      dms:n(r[COLS.dms]),convos:n(r[COLS.convos]),
+      unqAppt:n(r[COLS.unqAppt]),qlAppt:n(r[COLS.qlAppt]),
       callsTaken:n(r[COLS.callsTaken]),callsClosed:n(r[COLS.callsClosed]),
-      cashCollected:n(r[COLS.cashCollected]),revenue:n(r[COLS.revenue])};
+      cashCollected:n(r[COLS.cashCollected]),revenue:n(r[COLS.revenue])
+    };
   }).filter(r=>r.date);
 }
 
 function calcKPIs(rows,who){
   const f=who==='both'?rows:rows.filter(r=>who==='jack'?r.isJack:r.isLewis);
   const sum=k=>f.reduce((a,r)=>a+(r[k]||0),0);
-  const follows=sum('follows'),inbLeads=sum('inbLeads'),qls=sum('qls'),dms=sum('dms'),
-    convos=sum('convos'),unqAppt=sum('unqAppt'),qlAppt=sum('qlAppt');
+  const follows=sum('follows'),inbLeads=sum('inbLeads'),qls=sum('qls'),
+    dms=sum('dms'),convos=sum('convos'),unqAppt=sum('unqAppt'),qlAppt=sum('qlAppt');
   const dmConvo=dms>0?(convos/dms)*100:null;
   const totalBooked=unqAppt+qlAppt;
   const cr=rows.filter(r=>r.isJack||r.isLewis);
@@ -188,10 +216,11 @@ function renderChart(id,labels,datasets){
   setTimeout(()=>{
     const ex=Chart.getChart(id);if(ex)ex.destroy();
     const el=document.getElementById(id);if(!el)return;
-    new Chart(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
+    new Chart(el,{type:'line',data:{labels,datasets},options:{
+      responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.isCurrency?'£'+ctx.parsed.y.toLocaleString():ctx.parsed.y}}},
-      scales:{y:{ticks:{callback:v=>datasets[0]?.isCurrency?'£'+v.toLocaleString():v,font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},
-      x:{ticks:{font:{size:10}},grid:{display:false}}}}});
+      scales:{y:{ticks:{callback:v=>datasets[0]?.isCurrency?'£'+v.toLocaleString():v,font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},x:{ticks:{font:{size:10}},grid:{display:false}}}
+    }});
   },60);
 }
 
@@ -235,9 +264,8 @@ function renderMain(){
 
   const jack=calcKPIs(rows,'jack'),lewis=calcKPIs(rows,'lewis'),all=calcKPIs(rows,'both');
   const months=getMonthsForPeriod();
-  const periodLabel=months.length===1
-    ?new Date(months[0]+'-15').toLocaleString('en-GB',{month:'long',year:'numeric'})
-    :new Date(months[0]+'-15').toLocaleString('en-GB',{month:'short',year:'numeric'})+' – '+new Date(months[months.length-1]+'-15').toLocaleString('en-GB',{month:'short',year:'numeric'});
+  const mLabel=m=>new Date(m+'-15').toLocaleString('en-GB',{month:'short',year:'numeric'});
+  const periodLabel=months.length===1?mLabel(months[0]):mLabel(months[0])+' – '+mLabel(months[months.length-1]);
 
   if(view==='combined'){
     const totDms=(jack.dms||0)+(lewis.dms||0),totConvos=(jack.convos||0)+(lewis.convos||0);
@@ -259,7 +287,10 @@ function renderMain(){
       <hr class="hr">${closingHTML(all)}
       ${months.length>1?`
       <p class="slabel">Monthly revenue trend</p>
-      <div class="leg"><span class="li"><span class="ls" style="background:#7c6ef7"></span>Revenue</span><span class="li"><span class="ls" style="background:#1D9E75"></span>Cash collected</span></div>
+      <div class="leg">
+        <span class="li"><span class="ls" style="background:#7c6ef7"></span>Revenue</span>
+        <span class="li"><span class="ls" style="background:#1D9E75"></span>Cash collected</span>
+      </div>
       <div style="position:relative;height:200px;margin-bottom:1.5rem"><canvas id="trendC"></canvas></div>`:''}`;
     if(months.length>1){
       const revByMonth=months.map(m=>allRows.filter(r=>r.month===m).reduce((a,r)=>a+(r.revenue||0),0));
@@ -312,8 +343,7 @@ function updateSecondaryControls(){
   if(!selMonth&&months.length)selMonth=months[months.length-1];
   if(period==='Month'||period==='Day'){
     const wrap=document.createElement('div');
-    wrap.id='monthCtrlWrap';
-    wrap.style.cssText='display:flex;gap:4px;align-items:center';
+    wrap.id='monthCtrlWrap';wrap.style.cssText='display:flex;gap:4px;align-items:center';
     const s=document.createElement('div');s.className='vsep';s.style.margin='0 4px';
     wrap.appendChild(s);
     months.forEach(m=>{
@@ -360,10 +390,10 @@ async function loadData(){
   const badge=document.getElementById('statusBadge');
   badge.textContent='Loading...';badge.className='badge loading';
   try{
-    const res=await fetch(API_URL);
-    const text=await res.text();
-    const json=JSON.parse(text.replace(/^[^(]+\(|\);?$/g,''));
-    const parsed=json.table.rows.map(r=>r.c.map(c=>c?c.v:null));
+    const res=await fetch(PROXY_URL);
+    const json=await res.json();
+    const csvText=json.contents;
+    const parsed=parseCSV(csvText);
     allRows=parseRows(parsed);
     const months=getMonths();
     if(months.length&&!selMonth)selMonth=months[months.length-1];
@@ -373,8 +403,9 @@ async function loadData(){
     buildControls();
     renderMain();
   }catch(e){
+    console.error(e);
     badge.textContent='Connection error';badge.className='badge err';
-    document.getElementById('main').innerHTML=`<div class="nodata">Could not connect to Google Sheets.<br>Make sure the sheet is set to "Anyone with the link can view".</div>`;
+    document.getElementById('main').innerHTML=`<div class="nodata">Could not connect to Google Sheets.<br>Check your internet connection and try refreshing.<br><small style="color:#ccc">${e.message}</small></div>`;
   }
 }
 
