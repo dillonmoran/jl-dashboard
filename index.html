@@ -1,3 +1,7 @@
+
+AI Overview
+— This is a live KPI dashboard for JL Setters providing performance data and trends.1
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,7 +78,7 @@ select{font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:8px;ba
   <div class="last-updated" id="lastUpdated"></div>
 </div>
 <script>
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzbAoesGTEkJVjCfXflD61Veg0sEEb7aYNf-kW4xHA0qXn4d5zTb0f_ol-HjY00r3qvug/exec';
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbybQfAh0bQ0l1EJ-YxZ5A45GYtHY8Z7GZE5XGs6xdpV8ev5-dXNZsI8XVTWZ1NVHA8u/exec';
 const JACK_NAMES=['jack glover','ollie sykes'];
 const LEWIS_NAMES=['lewis sheehy','harry tasch'];
 const COLS={submitter:1,date:2,follows:3,inbLeads:4,qls:5,dms:6,convos:7,unqAppt:8,qlAppt:9,callsTaken:10,callsClosed:11,cashCollected:12,revenue:13};
@@ -93,15 +97,14 @@ function parseRows(rows){
     const dateRaw=r[COLS.date];
     if(dateRaw){
       const s=String(dateRaw).trim();
+      // Apps Script now returns M/D/YYYY format directly
       const slash=s.split('/');
-      if(slash.length===3){const yr=slash[2].split(' ')[0];dateStr=`${yr.length===2?'20'+yr:yr}-${slash[0].padStart(2,'0')}-${slash[1].padStart(2,'0')}`;}
+      if(slash.length===3){
+        const yr=slash[2].split(' ')[0];
+        dateStr=`${yr.length===2?'20'+yr:yr}-${slash[0].padStart(2,'0')}-${slash[1].padStart(2,'0')}`;
+      }
       if(!dateStr&&s.match(/^\d{4}-\d{2}-\d{2}/))dateStr=s.slice(0,10);
-      if(!dateStr){try{const d=new Date(s);if(!isNaN(d)){
-        const yr=d.getFullYear();
-        const mo=String(d.getMonth()+1).padStart(2,'0');
-        const dy=String(d.getDate()).padStart(2,'0');
-        dateStr=`${yr}-${mo}-${dy}`;
-      }}catch(e){}}
+      if(!dateStr){try{const d=new Date(s);if(!isNaN(d)){const yr=d.getFullYear();const mo=String(d.getMonth()+1).padStart(2,'0');const dy=String(d.getDate()).padStart(2,'0');dateStr=`${yr}-${mo}-${dy}`;}}catch(e){}}
     }
     return{submitter:sub,date:dateStr,month:dateStr?dateStr.slice(0,7):null,isJack:isJack(sub),isLewis:isLewis(sub),
       follows:n(r[COLS.follows]),inbLeads:n(r[COLS.inbLeads]),qls:n(r[COLS.qls]),dms:n(r[COLS.dms]),convos:n(r[COLS.convos]),
@@ -216,10 +219,10 @@ async function loadData(){
     const data=await new Promise((resolve,reject)=>{
       const cbName='_jlcb_'+Date.now();
       const script=document.createElement('script');
-      const timer=setTimeout(()=>{delete window[cbName];document.body.removeChild(script);reject(new Error('Timeout'));},15000);
+      const timer=setTimeout(()=>{delete window[cbName];document.body.removeChild(script);reject(new Error('Timeout — check Apps Script is deployed as Anyone'));},15000);
       window[cbName]=(d)=>{clearTimeout(timer);delete window[cbName];document.body.removeChild(script);resolve(d);};
       script.src=APPS_SCRIPT_URL+'?callback='+cbName;
-      script.onerror=()=>{clearTimeout(timer);delete window[cbName];reject(new Error('Script load failed'));};
+      script.onerror=()=>{clearTimeout(timer);delete window[cbName];reject(new Error('Failed to load Apps Script'));};
       document.body.appendChild(script);
     });
     allRows=parseRows(data);
@@ -229,7 +232,7 @@ async function loadData(){
     buildControls();renderMain();
   }catch(e){
     console.error(e);badge.textContent='Connection error';badge.className='badge err';
-    document.getElementById('main').innerHTML=`<div class="nodata">Could not connect to data source.<br>Make sure you're online and try refreshing.<br><small style="color:#ccc">${e.message}</small></div>`;
+    document.getElementById('main').innerHTML=`<div class="nodata">Could not connect.<br><small style="color:#bbb">${e.message}</small></div>`;
   }
 }
 loadData();
